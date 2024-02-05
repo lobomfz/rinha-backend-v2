@@ -15,13 +15,10 @@ export const Transacoes = {
 			const isDebito = data.tipo === "d";
 
 			if (isDebito) {
-				const { saldo, limite } = await Clientes.getBase(
-					data.id_cliente,
-					trx,
-				);
+				const cliente = await Clientes.getBase(data.id_cliente, trx);
 
-				if (saldo - data.valor < -limite) {
-					throw new HttpError(422, "Limite de saldo excedido");
+				if (!cliente || cliente.saldo - data.valor < -cliente.limite) {
+					return false;
 				}
 			}
 
@@ -41,6 +38,7 @@ export const Transacoes = {
 			]);
 
 			if (isDebito && (isNaN(novoSaldo) || novoSaldo < -limite)) {
+				// essa n da pra tirar 😵‍💫
 				throw new HttpError(422, "Saldo insuficiente");
 			}
 
@@ -78,7 +76,7 @@ export const Transacoes = {
 			);
 
 		if (saldo == null) {
-			throw new HttpError(404, "");
+			return false;
 		}
 
 		return {

@@ -3,7 +3,9 @@ version: "3.5"
 services:
     api01: &api
         hostname: api01
-        image: lobomfz/rinha:latest
+        build:
+            context: .
+            dockerfile: ./Dockerfile
         volumes:
             - .:/app
         env_file:
