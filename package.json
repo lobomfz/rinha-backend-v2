@@ -1,0 +1,20 @@
+{
+  "name": "rinha-v2",
+  "version": "1.0.50",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.32.13",
+    "elysia": "latest",
+    "kysely": "^0.27.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.0",
+    "bun-types": "latest",
+    "prisma": "^5.9.1",
+    "prisma-kysely": "^1.7.1"
+  },
+  "module": "src/index.js"
+}

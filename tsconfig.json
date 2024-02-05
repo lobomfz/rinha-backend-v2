@@ -1,0 +1,30 @@
+{
+	"compilerOptions": {
+		"jsx": "react",
+		"target": "ESNext",
+		"lib": ["ESNext", "DOM"],
+		"types": ["bun-types"],
+		"module": "ESNext",
+		"rootDir": "src",
+		"moduleResolution": "node",
+		"baseUrl": ".",
+		"outDir": "./bin",
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"noImplicitAny": true,
+		"skipLibCheck": true,
+		"allowSyntheticDefaultImports": true,
+		"sourceMap": true,
+		"incremental": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"noUncheckedIndexedAccess": true,
+		"strictNullChecks": true,
+		"noEmit": true,
+		"paths": {
+			"@/*": ["src/*"],
+			"@Database/*": ["src/database/*"]
+		}
+	},
+	"include": ["."]
+}
