@@ -2,7 +2,7 @@ import { Transaction, sql } from "kysely";
 import { kyselyDb } from "./Connection";
 import { DB } from "./Generated/Kysely";
 import { Clientes } from "./Clientes";
-import { HttpError } from "../Utils/HttpError";
+import { HttpError } from "@/Utils/HttpError";
 
 export const Transacoes = {
 	async add(data: {

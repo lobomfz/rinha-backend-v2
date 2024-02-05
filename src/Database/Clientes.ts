@@ -1,6 +1,6 @@
 import { Transaction } from "kysely";
 import { kyselyDb } from "./Connection";
-import { HttpError } from "../Utils/HttpError";
+import { HttpError } from "@/Utils/HttpError";
 import { DB } from "./Generated/Kysely";
 
 export const Clientes = {
