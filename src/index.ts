@@ -13,12 +13,13 @@ const app = new Elysia()
 	.get("/clientes/:id/extrato", ({ params: { id } }) =>
 		Transacoes.getExtrato(Number(id)),
 	)
-	.post("/clientes/:id/transacoes", ({ params: { id }, body }) => {
+	.post("/clientes/:id/transacoes", ({ params: { id }, body, set }) => {
 		// Não da pra usar a validação nativa do elysia pq sempre retorna 400
 		const success = transacaoChecker.Check(body);
 
 		if (!success) {
-			throw new HttpError(422, "");
+			set.status = 422;
+			return "";
 		}
 
 		return Transacoes.add({

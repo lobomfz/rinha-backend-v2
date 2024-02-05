@@ -12,16 +12,20 @@ export const Transacoes = {
 		descricao: string;
 	}) {
 		return await kyselyDb.transaction().execute(async (trx) => {
-			const { saldo, limite } = await Clientes.getBase(
-				data.id_cliente,
-				trx,
-			);
+			const isDebito = data.tipo === "d";
 
-			if (data.tipo === "d" && saldo - data.valor < -limite) {
-				throw new HttpError(422, "Limite de saldo excedido");
+			if (isDebito) {
+				const { saldo, limite } = await Clientes.getBase(
+					data.id_cliente,
+					trx,
+				);
+
+				if (saldo - data.valor < -limite) {
+					throw new HttpError(422, "Limite de saldo excedido");
+				}
 			}
 
-			const [{ saldo: novoSaldo }] = await Promise.all([
+			const [{ saldo: novoSaldo, limite }] = await Promise.all([
 				trx
 					.updateTable("clientes as c")
 					.set(
@@ -31,12 +35,12 @@ export const Transacoes = {
 						}`,
 					)
 					.where("c.id", "=", data.id_cliente)
-					.returning("c.saldo")
+					.returning(["c.saldo", "c.limite"])
 					.executeTakeFirstOrThrow(),
 				trx.insertInto("transacoes").values(data).execute(),
 			]);
 
-			if (isNaN(novoSaldo) || novoSaldo < -limite) {
+			if (isDebito && (isNaN(novoSaldo) || novoSaldo < -limite)) {
 				throw new HttpError(422, "Saldo insuficiente");
 			}
 
