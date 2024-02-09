@@ -44,3 +44,5 @@ package-lock.json
 prisma
 results
 tsconfig.tsbuildinfo
+
+load-test
