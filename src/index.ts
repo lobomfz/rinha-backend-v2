@@ -3,7 +3,7 @@ import { Transacoes } from "./Database/Transacoes";
 import { transacaoChecker } from "./Schemas/Transacoes";
 import { HttpError } from "./Utils/HttpError";
 
-const app = new Elysia()
+new Elysia()
 	.onError(({ error, set }) => {
 		if (error instanceof HttpError) {
 			set.status = error.status;
@@ -13,14 +13,14 @@ const app = new Elysia()
 	.get("/clientes/:id/extrato", async ({ params: { id }, set }) => {
 		const res = await Transacoes.getExtrato(Number(id));
 
-		if (!res) {
-			set.status = 404;
+		if (typeof res === "number") {
+			set.status = res;
 			return "";
 		}
 
 		return res;
 	})
-	.post("/clientes/:id/transacoes", async ({ params: { id }, body, set }) => {
+	.post("/clientes/:id/transacoes", ({ params: { id }, body, set }) => {
 		// Não da pra usar a validação nativa do elysia pq sempre retorna 400
 		const success = transacaoChecker.Check(body);
 
@@ -29,18 +29,11 @@ const app = new Elysia()
 			return "";
 		}
 
-		const res = await Transacoes.add({
+		return Transacoes.add({
 			id_cliente: Number(id),
 			valor: body.valor,
 			tipo: body.tipo,
 			descricao: body.descricao,
 		});
-
-		if (!res) {
-			set.status = 422;
-			return "";
-		}
-
-		return res;
 	})
 	.listen(3000);

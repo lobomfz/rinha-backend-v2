@@ -1,7 +1,5 @@
 import { Transaction, sql } from "kysely";
 import { kyselyDb } from "./Connection";
-import { DB } from "./Generated/Kysely";
-import { Clientes } from "./Clientes";
 import { HttpError } from "@/Utils/HttpError";
 
 export const Transacoes = {
@@ -12,72 +10,44 @@ export const Transacoes = {
 		descricao: string;
 	}) {
 		return await kyselyDb.transaction().execute(async (trx) => {
-			const isDebito = data.tipo === "d";
+			const { saldo, limite } = await trx
+				.updateTable("clientes as c")
+				.set(
+					"saldo",
+					sql`saldo + ${data.tipo === "c" ? data.valor : -data.valor}`
+				)
+				.where("c.id", "=", data.id_cliente)
+				.returning(["c.saldo", "c.limite"])
+				.executeTakeFirstOrThrow();
 
-			if (isDebito) {
-				const cliente = await Clientes.getBase(data.id_cliente, trx);
-
-				if (!cliente || cliente.saldo - data.valor < -cliente.limite) {
-					return false;
-				}
-			}
-
-			const [{ saldo: novoSaldo, limite }] = await Promise.all([
-				trx
-					.updateTable("clientes as c")
-					.set(
-						"saldo",
-						sql`saldo + ${
-							data.tipo === "c" ? data.valor : -data.valor
-						}`,
-					)
-					.where("c.id", "=", data.id_cliente)
-					.returning(["c.saldo", "c.limite"])
-					.executeTakeFirstOrThrow(),
-				trx.insertInto("transacoes").values(data).execute(),
-			]);
-
-			if (isDebito && (isNaN(novoSaldo) || novoSaldo < -limite)) {
-				// essa n da pra tirar 😵‍💫
+			if (data.tipo === "d" && saldo < -limite) {
 				throw new HttpError(422, "Saldo insuficiente");
 			}
 
-			return { saldo: novoSaldo, limite };
+			await trx.insertInto("transacoes").values(data).execute();
+
+			return { saldo, limite };
 		});
 	},
 
 	async getExtrato(id_cliente: number) {
-		const [saldo, ultimas_transacoes] = await kyselyDb
-			.transaction()
-			.execute((trx) =>
-				Promise.all([
-					trx
-						.selectFrom("clientes as c")
-						.where("c.id", "=", id_cliente)
-						.select([
-							"c.saldo as total",
-							"c.limite",
-							sql`NOW()`.as("data_extrato"),
-						])
-						.executeTakeFirst(),
-					trx
-						.selectFrom("transacoes as t")
-						.where("t.id_cliente", "=", id_cliente)
-						.select([
-							"t.valor",
-							"t.tipo",
-							"t.descricao",
-							"t.realizada_em",
-						])
-						.orderBy("t.realizada_em", "desc")
-						.limit(10)
-						.execute(),
-				]),
-			);
+		const saldo = await kyselyDb
+			.selectFrom("clientes as c")
+			.where("c.id", "=", id_cliente)
+			.select(["c.saldo as total", "c.limite", sql`NOW()`.as("data_extrato")])
+			.executeTakeFirst();
 
 		if (saldo == null) {
-			return false;
+			return 404;
 		}
+
+		const ultimas_transacoes = await kyselyDb
+			.selectFrom("transacoes as t")
+			.where("t.id_cliente", "=", id_cliente)
+			.select(["t.valor", "t.tipo", "t.descricao", "t.realizada_em"])
+			.orderBy("t.realizada_em", "desc")
+			.limit(10)
+			.execute();
 
 		return {
 			saldo,
